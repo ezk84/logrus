@@ -18,7 +18,21 @@ var kernel32 = syscall.NewLazyDLL("kernel32.dll")
 
 var (
 	procGetConsoleMode = kernel32.NewProc("GetConsoleMode")
+	procSetConsoleMode = kernel32.NewProc("SetConsoleMode")
 )
+
+const (
+	enableProcessedOutput           = 0x0001
+	enableWrapAtEolOutput           = 0x0002
+	enableVirtualTerminalProcessing = 0x0004
+)
+
+func init() {
+	// Activate Virtual Processing for Windows CMD
+	// Info: https://msdn.microsoft.com/en-us/library/windows/desktop/ms686033(v=vs.85).aspx
+	handle := syscall.Handle(os.Stderr.Fd())
+	procSetConsoleMode.Call(uintptr(handle), enableProcessedOutput|enableWrapAtEolOutput|enableVirtualTerminalProcessing)
+}
 
 // IsTerminal returns true if stderr's file descriptor is a terminal.
 func IsTerminal(f io.Writer) bool {
